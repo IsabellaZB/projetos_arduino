@@ -1,0 +1,23 @@
+int led1 = 8;
+int led2 = 7;
+int sensor = 4;
+bool som;
+
+void setup() {
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  pinMode(sensor, INPUT);
+}
+
+void loop() {
+som = digitalRead(sensor);
+
+  if(!som){
+  digitalWrite(led1, HIGH);
+    digitalWrite(led2, HIGH);
+    delay(600);
+     digitalWrite(led1, LOW);
+    digitalWrite(led2, LOW);
+    delay(600);
+  }
+}
