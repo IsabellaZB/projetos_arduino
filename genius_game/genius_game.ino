@@ -1,7 +1,7 @@
-int ledVermelho = 2;
-int ledVerde = 3;
-int ledAzul = 4;
-int ledAmarelo = 5;
+#define ledVermelho 2
+#define ledVerde 3
+#define ledAzul 4
+#define ledAmarelo 5
 
 int botaoVermelho = 6;
 int botaoVerde = 7;
@@ -10,9 +10,11 @@ int botaoAmarelo = 9;
 
 int buzzer = 11;
 
+int indefinido = -1;
 int rodadaAtual = 0;
 int ledsRespondidos = 0;
-int rodadaLimite = 20;
+
+#define rodadaLimite 20
 
 int sequenciaLeds[rodadaLimite];
 
@@ -23,34 +25,33 @@ enum estados {
   VITORIA
 };
 
-int sortear(){
-  return random(ledVermelho,ledAmarelo+1);
+int sortear() {
+  return random(ledVermelho, ledAmarelo + 1);
 }
 
-void iniciarJogo(){
+void iniciarJogo() {
   int jogo = analogRead(0);
   randomSeed(jogo);
-  for(int i=0; i<rodadaLimite; i++){
-    sequenciaLeds[i]=sortear();
+  for (int i = 0; i < rodadaLimite; i++) {
+    sequenciaLeds[i] = sortear();
   }
 }
 
-void piscarLed(int corLed){
-  verificarSomLed(corLed);
+void piscarLed(int corLed) {
   digitalWrite(corLed, HIGH);
-  delay(500);
+  verificarSomLed(corLed);
   digitalWrite(corLed, LOW);
   delay(500);
 }
 
-void tocarSom(int frequencia){
+void tocarSom(int frequencia) {
   tone(buzzer, frequencia);
   delay(500);
   noTone(buzzer);
 }
 
-void verificarSomLed(int corLed){
-  switch (corLed){
+void verificarSomLed(int corLed) {
+  switch (corLed) {
     case ledVermelho:
       tocarSom(500);
       break;
@@ -61,15 +62,41 @@ void verificarSomLed(int corLed){
       tocarSom(1500);
       break;
     case ledAmarelo:
-    tocarSom(2000);
-    break;
+      tocarSom(2000);
+      break;
+  }
+}
+void checarResposta() {
+  int resposta = checarCorBotao();
+  Serial.println(resposta);
+  delay(50);
+  if (resposta == indefinido) {
+    return;
+  }
+  if (resposta == sequenciaLeds[ledsRespondidos]) {
+    ledsRespondidos++;
+  } else {
+    rodadaAtual = rodadaLimite + 2;  //Quando a rodadaAtual for 22, houve derrota, poderia ser 300 até, é simbólico.
+  }
+}
+
+void gerarRodada() {
+  for (int i = 0; i < rodadaAtual; i++) {
+    piscarLed(sequenciaLeds[i]);
+  }
+}
+
+void prepararProximaRodada() {
+  rodadaAtual++;
+  ledsRespondidos = 0;
+  if (rodadaAtual <= rodadaLimite) {
+    gerarRodada();
   }
 }
 
 int verificarEstadoAtual() {
   if (rodadaAtual <= rodadaLimite) {
-    rodaAtual++;
-    
+
     if (ledsRespondidos == rodadaAtual) {  //quando o jogador apertar todos os botoes na ordem
       return PRONTO_PARA_PROXIMA_RODADA;
     } else {  //quando o jogador nao apertar todos os botoes
@@ -82,8 +109,31 @@ int verificarEstadoAtual() {
   }
 }
 
-void finalizarJogoVitoria(){
-  for(int i = 0; i < 5; i++){
+int checarCorBotao() {
+  if (digitalRead(botaoVermelho) == LOW) {
+    piscarLed(ledVermelho);
+    return ledVermelho;
+  }
+
+  if (digitalRead(botaoVerde) == LOW) {
+    piscarLed(ledVerde);
+    return ledVerde;
+  }
+
+  if (digitalRead(botaoAzul) == LOW) {
+    piscarLed(ledAzul);
+    return ledAzul;
+  }
+
+  if (digitalRead(botaoAmarelo) == LOW) {
+    piscarLed(ledAmarelo);
+    return ledAmarelo;
+  }
+  return indefinido;
+}
+
+void finalizarJogoVitoria() {
+  for (int i = 0; i < 5; i++) {
     tocarSom(2000);
     piscarLed(ledVermelho);
     tocarSom(2500);
@@ -95,7 +145,7 @@ void finalizarJogoVitoria(){
   }
 }
 
-void finalizarJogoDerrota(){
+void finalizarJogoDerrota() {
   digitalWrite(ledVermelho, HIGH);
   digitalWrite(ledVerde, HIGH);
   digitalWrite(ledAzul, HIGH);
@@ -128,7 +178,31 @@ void setup() {
   pinMode(buzzer, OUTPUT);
 
   Serial.begin(9600);
+
+  // iniciarJogo();
+
+  finalizarJogoVitoria();
 }
 
 void loop() {
+
+  // switch (verificarEstadoAtual()) {
+  //   case DERROTA:
+  //   Serial.println("Perdeu!");
+  //     finalizarJogoDerrota();
+  //     break;
+  //   case VITORIA:
+  //   Serial.println("Venceu!");
+  //     finalizarJogoVitoria();
+  //     break;
+  //   case USUARIO_JOGANDO:
+  //   Serial.println("Responde Logo!");
+  //     checarResposta();
+  //     break;
+  //   case PRONTO_PARA_PROXIMA_RODADA:
+  //     Serial.println("Bora lá mais uma meu patrão!");
+  //     prepararProximaRodada();
+  //     break;
+  // }
+  // delay(200);
 }
