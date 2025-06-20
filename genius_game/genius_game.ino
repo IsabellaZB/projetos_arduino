@@ -37,6 +37,12 @@ void iniciarJogo() {
   }
 }
 
+void reiniciarJogo() {
+  delay(4000);
+  rodadaAtual = 0;
+  iniciarJogo();
+}
+
 void piscarLed(int corLed) {
   digitalWrite(corLed, HIGH);
   verificarSomLed(corLed);
@@ -132,36 +138,69 @@ int checarCorBotao() {
   return indefinido;
 }
 
+void tocarNotaLed(int frequencia, int duracao, int led) {
+  digitalWrite(led, HIGH);
+  tone(buzzer, frequencia);
+  delay(duracao);
+  digitalWrite(led, LOW);
+  noTone(buzzer);
+}
+
 void finalizarJogoVitoria() {
-  for (int i = 0; i < 5; i++) {
-    tocarSom(2000);
-    piscarLed(ledVermelho);
-    tocarSom(2500);
-    piscarLed(ledVerde);
-    tocarSom(3000);
-    piscarLed(ledAzul);
-    tocarSom(3500);
-    piscarLed(ledAmarelo);
-  }
+  tocarNotaLed(523, 250, ledVermelho);  // C5
+  tocarNotaLed(659, 250, ledVerde);     // E5
+  tocarNotaLed(784, 250, ledAzul);      // G5
+  tocarNotaLed(1047, 400, ledAmarelo);  // C6 (ponto alto)
+
+  delay(100);
+
+  tocarNotaLed(784, 250, ledAzul);      // G5
+  tocarNotaLed(880, 250, ledVerde);     // A5
+  tocarNotaLed(988, 250, ledVermelho);  // B5
+  tocarNotaLed(1047, 400, ledAmarelo);  // C6 final
+
+  noTone(buzzer);
+
+  reiniciarJogo();
 }
 
 void finalizarJogoDerrota() {
-  digitalWrite(ledVermelho, HIGH);
-  digitalWrite(ledVerde, HIGH);
-  digitalWrite(ledAzul, HIGH);
-  digitalWrite(ledAmarelo, HIGH);
-  delay(250);
-  tone(buzzer, 392, 450);
-  delay(50);
-  digitalWrite(ledVermelho, LOW);
-  tone(buzzer, 330, 450);
-  delay(50);
-  digitalWrite(ledVerde, LOW);
-  tone(buzzer, 300, 450);
-  delay(50);
-  digitalWrite(ledAzul, LOW);
-  tone(buzzer, 262, 700);
-  digitalWrite(ledAmarelo, LOW);
+  int notas[] = {
+    1047,  // C6
+    880,   // A5
+    698,   // F5
+    587,   // D5
+    494,   // B4
+    392,   // G4
+    330    // E4 (final)
+  };
+
+  int duracoes[] = {
+    250, 250, 300, 300, 350,
+    400, 900  // Final mais longo
+  };
+
+  for (int i = 0; i < 7; i++) {
+    tone(buzzer, notas[i]);
+
+    // Acende todos os LEDs
+    digitalWrite(ledVermelho, HIGH);
+    digitalWrite(ledVerde, HIGH);
+    digitalWrite(ledAzul, HIGH);
+    digitalWrite(ledAmarelo, HIGH);
+
+    delay(duracoes[i]);
+
+    // Desliga som e LEDs
+    noTone(buzzer);
+    digitalWrite(ledVermelho, LOW);
+    digitalWrite(ledVerde, LOW);
+    digitalWrite(ledAzul, LOW);
+    digitalWrite(ledAmarelo, LOW);
+
+    delay(70);  // Pausa entre notas
+  }
+  reiniciarJogo();
 }
 
 void setup() {
@@ -179,30 +218,28 @@ void setup() {
 
   Serial.begin(9600);
 
-  // iniciarJogo();
-
-  finalizarJogoVitoria();
+  iniciarJogo();
 }
 
 void loop() {
 
-  // switch (verificarEstadoAtual()) {
-  //   case DERROTA:
-  //   Serial.println("Perdeu!");
-  //     finalizarJogoDerrota();
-  //     break;
-  //   case VITORIA:
-  //   Serial.println("Venceu!");
-  //     finalizarJogoVitoria();
-  //     break;
-  //   case USUARIO_JOGANDO:
-  //   Serial.println("Responde Logo!");
-  //     checarResposta();
-  //     break;
-  //   case PRONTO_PARA_PROXIMA_RODADA:
-  //     Serial.println("Bora lá mais uma meu patrão!");
-  //     prepararProximaRodada();
-  //     break;
-  // }
-  // delay(200);
+  switch (verificarEstadoAtual()) {
+    case DERROTA:
+      Serial.println("Perdeu!");
+      finalizarJogoDerrota();
+      break;
+    case VITORIA:
+      Serial.println("Venceu!");
+      finalizarJogoVitoria();
+      break;
+    case USUARIO_JOGANDO:
+      Serial.println("Responde Logo!");
+      checarResposta();
+      break;
+    case PRONTO_PARA_PROXIMA_RODADA:
+      Serial.println("Bora lá mais uma meu patrão!");
+      prepararProximaRodada();
+      break;
+  }
+  delay(200);
 }
